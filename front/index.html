@@ -3,219 +3,98 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>E-Commerce Transaccional</title>
-  <link rel="stylesheet" href="styles.css?v=4" />
+  <title>Agente de pedidos</title>
+  <link rel="stylesheet" href="/static/styles.css" />
 </head>
 <body>
   <main class="container">
     <header class="header">
-      <h1>E-Commerce Transaccional</h1>
-      <p>Sistema inteligente de consultas y compras de productos.</p>
+      <h1>Agente de pedidos</h1>
+      <p>Consultas en lenguaje natural sobre un catálogo en grafo: precios, stock, vendedores, recomendaciones y pedidos.</p>
+      <div class="meta" id="estado"></div>
     </header>
 
     <div class="layout">
       <div class="main-column">
-        <!-- SECCIÓN DE CONSULTAS -->
         <section class="card">
-          <h2>Consultar Productos</h2>
-          <label for="query">¿Qué buscas?</label>
-          <textarea id="query" rows="3" placeholder="Ejemplo: ¿Qué laptops hay? ¿Cuánto cuesta el iPhone?"></textarea>
-          <button id="send">Buscar Producto</button>
-          <div id="status" class="status"></div>
+          <h2>Consulta</h2>
+          <label for="consulta">¿Qué necesita?</label>
+          <textarea id="consulta" rows="2" maxlength="300" placeholder="¿Cuánto cuesta el iPhone 15?"></textarea>
+          <div class="ejemplos" id="ejemplos"></div>
+          <button id="enviar">Consultar</button>
+          <div id="aviso" class="status" role="status"></div>
         </section>
 
-        <!-- RESPUESTA -->
         <section class="card">
           <h2>Respuesta</h2>
-          <div id="answer" class="answer">Aún no hay resultados.</div>
+          <div id="respuesta" class="answer">Todavía no hay consultas.</div>
           <div class="meta">
-            <span id="function-label" class="chip">Función: -</span>
-            <span id="confidence-label" class="chip">Confianza: -</span>
+            <span id="funcion" class="chip">Función: -</span>
+            <span id="similitud" class="chip">Similitud: -</span>
+            <span id="origen" class="chip">Redacción: -</span>
           </div>
+          <div id="resultados" class="tabla-contenedor"></div>
         </section>
 
-        <!-- PRODUCTOS (solo para búsquedas de producto) -->
-        <section class="card" id="resultados-section" style="display: none;">
-          <h2>Productos Disponibles</h2>
-          <div id="productos-lista" class="productos-grid">
-            <!-- Los productos se cargarán aquí dinámicamente -->
-          </div>
-        </section>
-
-        <!-- CARRITO DE COMPRAS -->
         <section class="card carrito-section">
-          <h2>Carrito de Compras</h2>
-          <div id="carrito-items" class="carrito-items">
-            <p class="carrito-vacio">El carrito está vacío</p>
-          </div>
-          <div class="carrito-resumen" id="carrito-resumen" style="display: none;">
-            <div class="total-carrito">
-              <span>Total:</span>
-              <span id="total-precio">$0.00</span>
-            </div>
-            <button id="btn-comprar" class="btn-comprar">Realizar Compra</button>
+          <h2>Carrito</h2>
+          <div id="carrito" class="carrito-items"></div>
+          <div class="carrito-resumen" id="carrito-resumen" hidden>
+            <label for="cliente">Nombre del cliente</label>
+            <input id="cliente" maxlength="80" placeholder="Ana Pérez" />
+            <div class="total-carrito"><span>Total</span><span id="total">$0.00</span></div>
+            <button id="confirmar" class="btn-comprar">Confirmar pedido</button>
           </div>
         </section>
 
-        <!-- HISTORIAL DE PEDIDOS -->
         <section class="card">
-          <h2>Historial de Pedidos</h2>
-          <div id="historial-pedidos" class="historial-pedidos">
-            <p class="sin-pedidos">No hay pedidos realizados aún.</p>
-          </div>
+          <h2>Pedidos</h2>
+          <div id="pedidos" class="historial-pedidos"></div>
         </section>
       </div>
 
       <aside class="side-column">
-        <!-- GRAFO EN VIVO -->
         <section class="card graph-card">
           <div class="card-header">
-            <h2>Grafo en vivo</h2>
-            <span id="graph-status" class="status-pill">EN ESPERA</span>
+            <h2>Recorrido del agente</h2>
+            <span id="estado-grafo" class="status-pill">EN ESPERA</span>
           </div>
-          <div class="graph-canvas" id="graph-canvas" aria-label="Grafo de consulta">
-            <svg class="graph-svg" viewBox="0 0 460 300" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Flujo de consulta">
+          <div class="graph-canvas">
+            <svg class="graph-svg" viewBox="0 0 460 240" role="img" aria-label="Grafo del agente en LangGraph">
               <defs>
                 <linearGradient id="graphGlow" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stop-color="#22d3ee" />
-                  <stop offset="55%" stop-color="#34d399" />
-                  <stop offset="100%" stop-color="#60a5fa" />
+                  <stop offset="0%" stop-color="#22d3ee" /><stop offset="55%" stop-color="#34d399" /><stop offset="100%" stop-color="#60a5fa" />
                 </linearGradient>
                 <radialGradient id="nodeGradient" cx="35%" cy="35%" r="70%">
-                  <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9" />
-                  <stop offset="60%" stop-color="#38bdf8" stop-opacity="0.65" />
-                  <stop offset="100%" stop-color="#0ea5e9" stop-opacity="0.35" />
+                  <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9" /><stop offset="60%" stop-color="#38bdf8" stop-opacity="0.65" /><stop offset="100%" stop-color="#0ea5e9" stop-opacity="0.35" />
                 </radialGradient>
-                <filter id="nodeGlow" x="-40%" y="-40%" width="180%" height="180%">
-                  <feGaussianBlur stdDeviation="6" result="blur" />
-                  <feMerge>
-                    <feMergeNode in="blur" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
               </defs>
-
-              <!-- Edges -->
-              <path class="graph-edge" data-edge="consulta-router" d="M60 140 C90 120 100 110 130 95" />
-              <path class="graph-edge" data-edge="consulta-embedding" d="M60 140 C90 160 100 175 130 190" />
-              <path class="graph-edge" data-edge="router-planner" d="M150 90 C175 70 190 70 220 80" />
-              <path class="graph-edge" data-edge="embedding-planner" d="M150 190 C175 170 190 160 220 120" />
-              <path class="graph-edge" data-edge="planner-neo4j" d="M230 100 C245 115 250 120 260 140" />
-              <path class="graph-edge" data-edge="neo4j-llm" d="M270 140 C300 120 315 110 330 100" />
-              <path class="graph-edge" data-edge="llm-respuesta" d="M340 100 C360 115 370 125 390 140" />
-              <path class="graph-edge" data-edge="neo4j-productos" d="M260 140 C240 170 230 185 215 210" />
-              <path class="graph-edge" data-edge="neo4j-vendedor" d="M260 140 C285 170 300 185 320 200" />
-              <path class="graph-edge" data-edge="neo4j-carrito" d="M260 140 C285 200 300 215 330 230" />
-              <path class="graph-edge" data-edge="router-smalltalk" d="M150 90 C175 40 210 35 240 35" />
-              <path class="graph-edge" data-edge="smalltalk-respuesta" d="M260 40 C320 50 360 90 390 140" />
-
-              <!-- Nodes -->
-              <g class="graph-node" data-node="consulta">
-                <circle class="node-base" cx="50" cy="140" r="16" />
-                <circle class="node-core" cx="50" cy="140" r="7" />
-                <text class="node-label" x="50" y="168">Consulta</text>
-              </g>
-
-              <g class="graph-node" data-node="router">
-                <circle class="node-base" cx="140" cy="90" r="15" />
-                <circle class="node-core" cx="140" cy="90" r="6" />
-                <text class="node-label" x="140" y="118">Router</text>
-              </g>
-
-              <g class="graph-node" data-node="embedding">
-                <circle class="node-base" cx="140" cy="190" r="15" />
-                <circle class="node-core" cx="140" cy="190" r="6" />
-                <text class="node-label" x="140" y="218">Embedding</text>
-              </g>
-
-              <g class="graph-node" data-node="planner">
-                <circle class="node-base" cx="230" cy="90" r="16" />
-                <circle class="node-core" cx="230" cy="90" r="7" />
-                <text class="node-label" x="230" y="118">Plan</text>
-              </g>
-
-              <g class="graph-node" data-node="neo4j">
-                <circle class="node-base" cx="260" cy="140" r="18" />
-                <circle class="node-core" cx="260" cy="140" r="8" />
-                <text class="node-label" x="260" y="170">Neo4j</text>
-              </g>
-
-              <g class="graph-node" data-node="productos">
-                <circle class="node-base" cx="210" cy="220" r="14" />
-                <circle class="node-core" cx="210" cy="220" r="5" />
-                <text class="node-label" x="210" y="245">Productos</text>
-              </g>
-
-              <g class="graph-node" data-node="vendedor">
-                <circle class="node-base" cx="320" cy="200" r="14" />
-                <circle class="node-core" cx="320" cy="200" r="5" />
-                <text class="node-label" x="320" y="225">Vendedor</text>
-              </g>
-
-              <g class="graph-node" data-node="carrito">
-                <circle class="node-base" cx="330" cy="232" r="12" />
-                <circle class="node-core" cx="330" cy="232" r="4" />
-                <text class="node-label" x="330" y="255">Carrito</text>
-              </g>
-
-              <g class="graph-node" data-node="llm">
-                <circle class="node-base" cx="330" cy="90" r="15" />
-                <circle class="node-core" cx="330" cy="90" r="6" />
-                <text class="node-label" x="330" y="118">LLM</text>
-              </g>
-
-              <g class="graph-node" data-node="respuesta">
-                <circle class="node-base" cx="390" cy="140" r="16" />
-                <circle class="node-core" cx="390" cy="140" r="7" />
-                <text class="node-label" x="390" y="170">Respuesta</text>
-              </g>
-
-              <g class="graph-node" data-node="smalltalk">
-                <circle class="node-base" cx="250" cy="40" r="13" />
-                <circle class="node-core" cx="250" cy="40" r="5" />
-                <text class="node-label" x="250" y="62">Smalltalk</text>
-              </g>
+              <path class="graph-edge" data-arista="interpretar-enrutar" d="M62 120 H128" />
+              <path class="graph-edge" data-arista="enrutar-ejecutar" d="M162 112 C190 70 205 60 228 60" />
+              <path class="graph-edge" data-arista="enrutar-conversar" d="M162 120 H228" />
+              <path class="graph-edge" data-arista="enrutar-aclarar" d="M162 128 C190 170 205 180 228 180" />
+              <path class="graph-edge" data-arista="ejecutar-redactar" d="M262 60 H328" />
+              <path class="graph-edge" data-arista="redactar-fin" d="M362 60 C385 70 395 95 408 112" />
+              <path class="graph-edge" data-arista="conversar-fin" d="M262 120 H402" />
+              <path class="graph-edge" data-arista="aclarar-fin" d="M262 180 C330 180 390 160 408 128" />
+              <g class="graph-node" data-nodo="interpretar"><circle class="node-base" cx="45" cy="120" r="16" /><circle class="node-core" cx="45" cy="120" r="6" /><text class="node-label" x="45" y="150">interpretar</text></g>
+              <g class="graph-node" data-nodo="enrutar"><circle class="node-base" cx="145" cy="120" r="16" /><circle class="node-core" cx="145" cy="120" r="6" /><text class="node-label" x="145" y="150">enrutar</text></g>
+              <g class="graph-node" data-nodo="ejecutar"><circle class="node-base" cx="245" cy="60" r="16" /><circle class="node-core" cx="245" cy="60" r="6" /><text class="node-label" x="245" y="32">ejecutar</text></g>
+              <g class="graph-node" data-nodo="redactar"><circle class="node-base" cx="345" cy="60" r="16" /><circle class="node-core" cx="345" cy="60" r="6" /><text class="node-label" x="345" y="32">redactar</text></g>
+              <g class="graph-node" data-nodo="conversar"><circle class="node-base" cx="245" cy="120" r="14" /><circle class="node-core" cx="245" cy="120" r="5" /><text class="node-label" x="245" y="150">conversar</text></g>
+              <g class="graph-node" data-nodo="aclarar"><circle class="node-base" cx="245" cy="180" r="14" /><circle class="node-core" cx="245" cy="180" r="5" /><text class="node-label" x="245" y="210">aclarar</text></g>
+              <g class="graph-node" data-nodo="fin"><circle class="node-base" cx="418" cy="120" r="14" /><circle class="node-core" cx="418" cy="120" r="5" /><text class="node-label" x="418" y="150">fin</text></g>
             </svg>
-          </div>
-          <div class="graph-footer">
-            <div class="graph-footer-item">
-              <span class="graph-label">TOOL</span>
-              <span id="graph-tool" class="graph-value">-</span>
-            </div>
-            <div class="graph-footer-item">
-              <span class="graph-label">TRACE</span>
-              <span id="graph-trace" class="graph-value">-</span>
-            </div>
           </div>
         </section>
 
-        <!-- LOGS AVANZADOS -->
         <section class="card logs-card">
-          <div class="card-header">
-            <h2>Logs Avanzados</h2>
-          </div>
-          <div id="trace-list" class="trace-list">
-            <div class="trace-item">Sin actividad.</div>
-          </div>
-          <pre id="details" class="details">Sin datos.</pre>
+          <div class="card-header"><h2>Traza</h2></div>
+          <div id="traza" class="trace-list"><div class="trace-item">Sin actividad.</div></div>
         </section>
       </aside>
     </div>
   </main>
-
-  <!-- MODAL DE CONFIRMACIÓN -->
-  <div id="modal-confirmacion" class="modal" style="display: none;">
-    <div class="modal-contenido">
-      <span class="modal-cerrar">&times;</span>
-      <h2>Confirmar Compra</h2>
-      <div id="modal-resumen" class="modal-resumen"></div>
-      <div class="modal-botones">
-        <button id="btn-cancelar" class="btn-cancelar">Cancelar</button>
-        <button id="btn-confirmar" class="btn-confirmar">Confirmar Pedido</button>
-      </div>
-    </div>
-  </div>
-
-  <script src="app.js?v=4"></script>
+  <script src="/static/app.js"></script>
 </body>
 </html>

@@ -92,7 +92,7 @@ body {
 
 .graph-canvas {
   position: relative;
-  height: 300px;
+  height: 240px;
   padding: 10px 12px 12px;
   border-radius: 12px;
   background: radial-gradient(circle at 15% 20%, rgba(52, 211, 153, 0.22), transparent 45%),
@@ -127,14 +127,12 @@ body {
   display: block;
   position: relative;
   z-index: 2;
-  transform: translateY(6px) scale(0.96);
-  transform-origin: center;
 }
 
 .graph-edge {
   fill: none;
   stroke: rgba(148, 163, 184, 0.5);
-  stroke-width: 1.9;
+  stroke-width: 2.5;
   stroke-linecap: round;
   stroke-linejoin: round;
   opacity: 0.7;
@@ -142,8 +140,8 @@ body {
 }
 
 .graph-edge.active {
-  stroke: url(#graphGlow);
-  stroke-width: 2.6;
+  stroke: #34d399;
+  stroke-width: 3.5;
   opacity: 1;
   filter: drop-shadow(0 0 10px rgba(34, 211, 238, 0.65));
   animation: edgeGlow 2.8s ease-in-out infinite;
@@ -151,6 +149,8 @@ body {
 
 .graph-node {
   transition: transform 0.35s ease;
+  transform-box: fill-box;
+  transform-origin: center;
 }
 
 .node-base {
@@ -168,7 +168,6 @@ body {
 
 .graph-node.active {
   transform: scale(1.08);
-  filter: url(#nodeGlow);
 }
 
 .graph-node.active .node-base {
@@ -183,7 +182,7 @@ body {
 
 .node-label {
   fill: #e2e8f0;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.2px;
   text-anchor: middle;
@@ -685,4 +684,47 @@ button:disabled {
   .side-column {
     position: static;
   }
+}
+
+.ejemplos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 12px;
+}
+
+.chip-boton {
+  cursor: pointer;
+  border: 1px solid #e4e7ee;
+}
+
+.tabla-contenedor {
+  overflow-x: auto;
+  margin-top: 12px;
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.tabla th,
+.tabla td {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid #eef0f4;
+}
+
+.tabla th {
+  color: #5b6672;
+  font-weight: 600;
+}
+
+.carrito-resumen input {
+  width: 100%;
+  padding: 8px;
+  margin: 4px 0 10px;
+  border: 1px solid #d6dae3;
+  border-radius: 8px;
 }
