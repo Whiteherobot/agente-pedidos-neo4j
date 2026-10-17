@@ -1,0 +1,34 @@
+services:
+  neo4j:
+    image: neo4j:5-community
+    environment:
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:-agente2026}
+    ports:
+      - "127.0.0.1:7474:7474"   # Neo4j Browser, para mirar el grafo
+    volumes:
+      - neo4j:/data
+    healthcheck:
+      test: ["CMD-SHELL", "cypher-shell -u neo4j -p \"$${NEO4J_AUTH#neo4j/}\" 'RETURN 1'"]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+
+  api:
+    build: .
+    environment:
+      NEO4J_URI: bolt://neo4j:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD:-agente2026}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    ports:
+      - "${PUERTO:-8000}:8000"
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/estado')"]
+      interval: 5s
+      retries: 10
+
+volumes:
+  neo4j:
