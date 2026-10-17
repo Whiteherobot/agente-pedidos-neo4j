@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  pruebas:
+    name: Memoria y Neo4j
+    runs-on: ubuntu-latest
+    services:
+      neo4j:
+        image: neo4j:5-community
+        env:
+          NEO4J_AUTH: neo4j/agente2026
+        ports:
+          - 7687:7687
+        options: >-
+          --health-cmd "cypher-shell -u neo4j -p agente2026 'RETURN 1'"
+          --health-interval 5s
+          --health-timeout 10s
+          --health-retries 30
+    env:
+      NEO4J_URI: bolt://localhost:7687
+      NEO4J_PASSWORD: agente2026
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - run: pytest -q
+      - name: Cuaderno del pipeline
+        working-directory: notebooks
+        run: |
+          python -c "
+          import nbformat; from nbclient import NotebookClient
+          nb = nbformat.read('pipeline_agente.ipynb', 4)
+          NotebookClient(nb, timeout=300, kernel_name='python3').execute()
+          "
+
+  compose:
+    runs-on: ubuntu-latest
+    needs: pruebas
+    steps:
+      - uses: actions/checkout@v5
+      - run: docker compose up -d --build --wait
+      - name: Consulta y pedido contra Neo4j
+        run: |
+          curl -sf localhost:8000/api/estado | grep -q '"catalogo":"neo4j"'
+          curl -sf -X POST localhost:8000/api/consulta -H 'Content-Type: application/json' \
+            -d '{"consulta":"¿Cuánto cuesta el iPhone 14?"}' | grep -q 'iPhone 14 Pro'
+          curl -sf -X POST localhost:8000/api/pedidos -H 'Content-Type: application/json' \
+            -d '{"cliente":"CI","items":[{"producto_id":4,"cantidad":2}]}' | grep -q '"total":159.98'
+      - if: failure()
+        run: docker compose logs
+      - run: docker compose down -v
